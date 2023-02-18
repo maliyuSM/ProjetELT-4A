@@ -1,0 +1,90 @@
+package com.example.testyourandroidsmartphone;
+
+import android.content.Context;
+import android.util.DisplayMetrics;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+
+public class AccelerometerGraphic extends FrameLayout {
+    private ImageView Palet;
+    private static android.content.Context Context;
+    private static double ScreenWidthDP,ScreenHeightDp,Height=160,Width=160;
+
+    public AccelerometerGraphic(Context context) {
+        super(context);
+        setContext(context);
+        setScreenHeightDp();
+        setScreenWidthDP();
+        setPalet();
+    }
+
+
+    //Les setters:
+    public static void setScreenWidthDP() {
+        ScreenWidthDP = Context.getResources().getConfiguration().screenWidthDp;
+        DisplayMetrics metrics = new DisplayMetrics();
+
+    }
+
+    public static void setScreenHeightDp() {
+        ScreenHeightDp = Context.getResources().getConfiguration().screenHeightDp;
+    }
+
+    public void setPalet() {
+        ImageView image = new ImageView(Context);
+        image.setImageResource(R.drawable.palet);
+        Palet=SetImageViewDimension(image,Width,Height,ScreenWidthDP/2,ScreenHeightDp/2);
+    }
+
+    public void setContext(Context context) {
+        Context = context;
+    }
+
+
+
+
+    public ImageView SetImageViewDimension(ImageView Image, double width, double height, double X, double Y)
+    {
+
+        // On paramètre le width et le height:
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams((int) ConvertToDP(width), (int) ConvertToDP(height)); // On paramètre de width et le height.
+
+        //On parametre la position de l'image dans l'écran:
+        FrameLayout.MarginLayoutParams params2=new FrameLayout.MarginLayoutParams(params);
+        params2.setMargins((int) ConvertToDP(X - width/2),
+                (int) ConvertToDP(ScreenHeightDp-Y-height/2),
+                (int) ConvertToDP(ScreenWidthDP-X-width/2),
+                (int) ConvertToDP(Y - height/2));
+
+        // On applique les nouveaux parametres:
+        Image.setLayoutParams(params);
+        Image.setLayoutParams(params2);
+        return (Image);
+
+    }
+
+    public ImageView getPalet() {
+        return Palet;
+    }
+
+
+    public double getHeight2() {
+        return Height;
+    }
+
+
+    public double getWidth2() {
+        return Width;
+    }
+
+    private double ConvertToDP(double Val)
+    {
+        double screenPixelDensity = Context.getResources().getDisplayMetrics().density; //pour recuperer le facteur de densité de pixel dp
+
+        return ((int) (Val * screenPixelDensity));
+    }
+
+    public void setPalet(float ProgressX,float ProgressY) {
+        Palet = SetImageViewDimension(Palet,Width,Height,ProgressX * (float)ScreenWidthDP/200.0,ProgressY * (float)ScreenHeightDp/200.0);
+    }
+}
