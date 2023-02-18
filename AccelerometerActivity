@@ -1,0 +1,102 @@
+package com.example.testyourandroidsmartphone;
+
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.FrameLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
+public class AccelerometerActivity extends AppCompatActivity implements SensorEventListener {
+
+    private SensorManager mSensorManager;
+    private SeekBar X_axis;
+    private SeekBar Y_axis;
+    private SeekBar Z_axis;
+    private TextView X_Axis;
+    private TextView Y_Axis;
+    private TextView Z_Axis;
+    private FrameLayout Layout;
+    private AccelerometerGraphic AccelerometerGraphic;
+    private TextView Vendor;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.accelerometeractivity);
+
+
+        AccelerometerGraphic=new AccelerometerGraphic(this);
+        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        X_axis=(SeekBar)findViewById(R.id.Accterometer_X_axis);
+        Y_axis=(SeekBar)findViewById(R.id.Accterometer_Y_axis);
+        Z_axis=(SeekBar)findViewById(R.id.Accterometer_Z_axis);
+        X_Axis=(TextView) findViewById(R.id.X_Axis);
+        Y_Axis=(TextView) findViewById(R.id.Y_Axis);
+        Z_Axis=(TextView) findViewById(R.id.Z_Axis);
+        Vendor=(TextView) findViewById(R.id.toto);
+
+        X_axis.setMax(200);
+        Y_axis.setMax(200);
+        Z_axis.setMax(200);
+        Vendor.setText(mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER).getVendor());
+
+
+        Layout=(FrameLayout) findViewById(R.id.myaccelerometerlayout);
+        Layout.addView(AccelerometerGraphic.getPalet(),1);
+    }
+
+
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mSensorManager.unregisterListener(this);
+    }
+
+
+
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        /*String message1 = Float.toString(event.values[0]);
+        String message2 = Float.toString(event.values[1]);
+        String message3 = Float.toString(event.values[2]);
+        String message= "X=" + message1 + " Y=" + message2 + " Z=" + message3;
+        Log.i("DEBUG",message);*/
+        double ScreenWidthDP = getResources().getConfiguration().screenWidthDp;
+        double ScreenHeightDp = getResources().getConfiguration().screenHeightDp;
+
+        float X = event.values[0]*10+95;
+        float Y = event.values[1]*10+95;
+        float Z = event.values[2]*10+95;
+        X_axis.setProgress((int)X);
+        Y_axis.setProgress((int)Y);
+        Z_axis.setProgress((int)Z);
+        X_Axis.setText("X_Axis: " + Float.toString(arrondir(event.values[0],2)));
+        Y_Axis.setText("Y_Axis: " + Float.toString(arrondir(event.values[1],2)));
+        Z_Axis.setText("Z_Axis: " + Float.toString(arrondir(event.values[2],2)));
+        Layout.removeViewAt(1);
+        AccelerometerGraphic.setPalet(X,Y);
+        Layout.addView(AccelerometerGraphic.getPalet(),1);
+    }
+
+    public float arrondir(float nombre,int nbApVirg)
+    {
+        return(float)((int)(nombre * Math.pow(10,nbApVirg) + .5)) / (float) Math.pow(10,nbApVirg);
+    }
+
+}
