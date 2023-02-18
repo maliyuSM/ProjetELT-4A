@@ -1,0 +1,294 @@
+package com.example.testyourandroidsmartphone;
+
+import static com.example.testyourandroidsmartphone.Microphone_HP_Activity.ButtonState.LISTENING;
+import static com.example.testyourandroidsmartphone.Microphone_HP_Activity.ButtonState.RECORDING;
+import static com.example.testyourandroidsmartphone.Microphone_HP_Activity.ButtonState.STARTS;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
+import android.support.constraint.ConstraintLayout;
+import android.support.constraint.ConstraintSet;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.util.AttributeSet;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Random;
+
+public class Microphone_HP_Activity extends AppCompatActivity {
+    private Button START;
+    private TextView MicroAmplitude;
+    private TextView HPAmplitude;
+    private TextView MyHP;
+    private TextView MyMICRO;
+    private MyRecording recording1;
+    public static final int request_code = 1000;
+    static ButtonState ButtonState = STARTS ;
+    private ProgressBar progressBar1;
+    private ProgressBar progressBar2;
+    int MEMORY=0; // Pour mémoriser l'ordre de la phrase qui a été passé dnas le String TEXTE[]
+    private TextView Texte;
+    private String TEXTE[] ={"La belle vache brune broute tranquillement dans le pré.",
+            "Les chevaux sauvages galopent à travers les champs.",
+            "Le chat noir dort paisiblement sur le canapé.",
+            "Le chien aboie joyeusement en jouant avec son jouet préféré.",
+            "Les oiseaux chantent leur mélodie sucrée dans les arbres.",
+            "Le vent souffle doucement à travers les feuilles.",
+            "La mer gronde et les vagues se brisent sur le rivage.",
+            "Le ronronnement de la voiture de sport rouge remplit la rue."};
+    // Tableau de couleurs prédéfinies
+    private int[] colors = {
+            Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.MAGENTA, Color.CYAN, Color.BLACK, Color.GRAY,
+            Color.DKGRAY, Color.LTGRAY, Color.rgb(255, 165, 0), Color.rgb(128, 0, 128), Color.rgb(0, 128, 128),
+            Color.rgb(255, 0, 255), Color.rgb(0, 255, 0), Color.rgb(255, 0, 0), Color.rgb(0, 0, 255),
+            Color.rgb(0, 255, 255), Color.rgb(255, 255, 0), Color.rgb(255, 140, 0), Color.rgb(218, 112, 214),
+            Color.rgb(127, 255, 212), Color.rgb(0, 128, 0), Color.rgb(255, 218, 185), Color.rgb(32, 178, 170),
+            Color.rgb(255, 105, 180), Color.rgb(240, 230, 140), Color.rgb(0, 191, 255), Color.rgb(139, 0, 139),
+            Color.rgb(255, 192, 203), Color.rgb(176, 196, 222), Color.rgb(152, 251, 152), Color.rgb(135, 206, 235),
+            Color.rgb(250, 128, 114), Color.rgb(123, 104, 238), Color.rgb(255, 99, 71), Color.rgb(154, 205, 50),
+            Color.rgb(147, 112, 219), Color.rgb(218, 165, 32), Color.rgb(0, 255, 127), Color.rgb(255, 20, 147),
+            Color.rgb(30, 144, 255), Color.rgb(255, 215, 0), Color.rgb(219, 112, 147), Color.rgb(123, 104, 238)
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_microphone_hp);
+
+        START = (Button) findViewById(R.id.button13);
+        MicroAmplitude = (TextView) findViewById(R.id.cacaca);
+        HPAmplitude = (TextView) findViewById(R.id.cicici);
+        ConstraintLayout layout = findViewById(R.id.MyLayout1);
+        MyMICRO = (TextView)findViewById(R.id.micro);
+        MyHP = (TextView)findViewById(R.id.hp);
+        Texte = (TextView)findViewById(R.id.texte);
+
+        //Instancier la ProgressBare1:
+        progressBar1 = new ProgressBar(this);
+        ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
+       params.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
+       params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
+       params.setMargins(0,200,80,0);
+       progressBar1.setLayoutParams(params);
+        layout.addView(progressBar1);
+
+
+        //Instancier la ProgressBare1
+        progressBar2 = new ProgressBar(this);
+        ConstraintLayout.LayoutParams params2 = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
+        params2.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
+        params2.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
+        params2.setMargins(0,600,80,0);
+        progressBar2.setLayoutParams(params2);
+        layout.addView(progressBar2);
+        UpdateHPAmplitude(0);
+        UpdateMicroAmplitude(0);
+
+        if (checkPermissionFromDevice()){}
+        else {requestPermissionFromDevice();}
+
+        START.setOnClickListener(new  View.OnClickListener() {
+
+            public void onClick (View view){
+                try {
+                    if(ButtonState==STARTS)
+                    {
+                        recording1 = new MyRecording(Microphone_HP_Activity.this);
+
+                        UpdateButton();
+
+                        Thread thread = new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        recording1.Recording();
+                                    }
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        };
+
+                        thread.start();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }});
+
+
+    }
+
+    public  void UpdateButton()
+    {
+        runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                switch (ButtonState)
+                {
+                    case STARTS:
+                        START.setText("RECORDING...");
+                        ButtonState = RECORDING;
+                        break;
+                    case RECORDING:
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            UpdateMicroAmplitude(0);
+                        }
+
+                        START.setText("LISTENING...");
+                        ButtonState = LISTENING;
+                        break;
+
+                    case LISTENING:
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            UpdateHPAmplitude(0);
+                        }
+
+                        START.setText("START");
+                        ButtonState = STARTS;
+                        break;
+
+                }
+
+            }
+        });
+    }
+
+    public  void UpdateMicroAmplitude(int amplitude)
+    {
+        runOnUiThread(new Runnable() {
+
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void run()
+            {
+                MicroAmplitude.setText("Amplitude:" + amplitude);
+                progressBar1.Update(amplitude);
+            }
+        });
+        }
+
+    public  void UpdateHPAmplitude(int amplitude)
+    {
+        runOnUiThread(new Runnable() {
+
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void run()
+            {
+                HPAmplitude.setText("Amplitude:" + amplitude);
+                progressBar2.UpdateHP(amplitude);
+            }
+        });
+    }
+
+
+    private void requestPermissionFromDevice() {
+        ActivityCompat.requestPermissions(this,new String[]{
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.RECORD_AUDIO},
+                request_code);
+    }
+
+    private boolean checkPermissionFromDevice() {
+        int storage_permission= ContextCompat.checkSelfPermission(this,Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int recorder_permssion=ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO);
+        return storage_permission == PackageManager.PERMISSION_GRANTED && recorder_permssion == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case request_code:
+            {
+                if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED ){
+                    Toast.makeText(getApplicationContext(),"permission granted...",Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(),"permission denied...",Toast.LENGTH_SHORT).show();
+                }
+            }
+            break;
+        }
+    }
+    public enum ButtonState {STARTS, RECORDING, LISTENING;}
+
+    public void setMyHP(String name)
+    {
+        MyHP.setText(name);
+    }
+
+    public void setMyMICRO(String name)
+    {
+
+        MyMICRO.setText(name);
+    }
+   public void UpdateSTART(String Temps)
+    {
+        runOnUiThread(new Runnable() {
+
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void run()
+            {
+                START.setText(ButtonState + "...        " + Temps);
+            }
+        });
+    }
+
+    public void UpdateTexte()
+    {
+        runOnUiThread(new Runnable() {
+
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void run()
+            {
+                Texte.setText(TEXTE[MEMORY]);
+                MEMORY++;
+                int color = getRandomColor();
+                Texte.setTextColor(color);
+            }
+        });
+    }
+
+    public void UpdateTexte(String texte)
+    {
+        runOnUiThread(new Runnable() {
+
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void run()
+            {
+                Texte.setText(texte);
+                int color = getRandomColor();
+                Texte.setTextColor(color);
+            }
+        });
+    }
+    private int getRandomColor() {
+        Random rand = new Random();
+        return colors[rand.nextInt(colors.length)];
+    }
+}
