@@ -1,0 +1,156 @@
+package com.example.testyourandroidsmartphone;
+
+import static android.support.v4.content.ContextCompat.getSystemService;
+
+import android.content.Context;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
+import android.widget.TextView;
+
+import java.io.File;
+import java.io.IOException;
+
+public class MyRecording extends MediaRecorder {
+    File file;
+    Microphone_HP_Activity Context;
+    MediaPlayer mediaPlayer;
+    AudioManager audioManager;
+    String MyMicro;
+    String MyHP;
+
+
+    public MyRecording(Microphone_HP_Activity context) throws IOException {
+        super();
+
+        Context = context;
+        this.setAudioSource(MediaRecorder.AudioSource.MIC);
+        this.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        this.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        file = new File(context.getCacheDir(), "MicrophoneRecordings");
+        String PATH_NAME = file.getPath();
+        this.setOutputFile(PATH_NAME);
+        this.prepare();
+    }
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void Recording() throws InterruptedException {
+        getMyHP();
+        getMyMicro();
+        Context.setMyHP(MyHP);
+        Context.setMyMICRO(MyMicro);
+        this.start();
+        UpdateMicrophoneAmplitude();//L'attente est faite dans cette fonction aussi
+        stop();
+        //Déclencher l'écoute avec le media recorder:
+        Context.UpdateButton();
+        Listen();
+        UpdateHPAmplitude();
+        Delete();
+    }
+
+    public void Listen()
+    {
+        try{
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(file.getPath());
+            mediaPlayer.prepare();
+            mediaPlayer.start();}
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void Delete()
+    {
+        file.delete();
+        this.release();
+        Context.UpdateButton();
+        Thread.currentThread().interrupt();
+    }
+
+    public void UpdateMicrophoneAmplitude() throws InterruptedException {
+        Context.UpdateTexte();
+        int Compteur1 = 30;
+        int Compteur2 = 0;
+        int Compteur3 = 0;
+        int i;
+        for(i=1;i<300;i++)
+        {
+            Compteur2++;
+            Compteur3++;
+            if (Compteur2 == 10)
+            {
+                Compteur2 = 0;
+                Compteur1--;
+                Context.UpdateSTART(String.valueOf(Compteur1));
+            }
+
+            if (Compteur3 == 40)
+            {
+                Compteur3=0;
+                Context.UpdateTexte();
+            }
+
+            Thread.sleep(100);
+            Context.UpdateMicroAmplitude(getAmplitude());
+        }
+    }
+
+
+    public int getAmplitude() {
+        return this.getMaxAmplitude();
+    }
+    public int getHPAmplitude() {
+        return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+    }
+
+
+    public void UpdateHPAmplitude() throws InterruptedException {
+
+         audioManager = (AudioManager) Context.getSystemService(android.content.Context.AUDIO_SERVICE);// pour recupérer infos sur l'haut-parleur intégré au tel
+       int Compteur1 = 30;
+       int Compteur2 = 0;
+        int i;
+        for(i=1;i<310;i++)
+        {
+            Compteur2++;
+            if (Compteur2 == 10)
+            {
+                Compteur2 = 0;
+                Compteur1--;
+                Context.UpdateSTART(String.valueOf(Compteur1));
+            }
+            Thread.sleep(100);
+            Context.UpdateHPAmplitude(getHPAmplitude());
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void getMyMicro()
+    {
+        AudioManager audiomanager = (AudioManager) Context.getSystemService(android.content.Context.AUDIO_SERVICE);
+        AudioDeviceInfo[] devices = audiomanager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+        for(AudioDeviceInfo Device : devices) {
+            if(Device.getType() == AudioDeviceInfo.TYPE_BUILTIN_MIC)
+            {
+                MyMicro = Device.getProductName().toString();
+            }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void getMyHP()
+    {
+        AudioManager audiomanager = (AudioManager) Context.getSystemService(android.content.Context.AUDIO_SERVICE);
+        AudioDeviceInfo[] devices = audiomanager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        for(AudioDeviceInfo Device : devices) {
+            if(Device.getType() == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER)
+            {
+                MyHP = Device.getProductName().toString();
+            }
+        }
+    }
+}
